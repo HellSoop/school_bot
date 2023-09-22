@@ -27,13 +27,16 @@ async def main() -> None:
     dp = Dispatcher(bot, storage=storage)
     await register_handlers(dp)
 
-    try:
-        await dp.skip_updates()
-        print('Бот запущен!')
-        await dp.start_polling()
-    except Exception as ex:
-        print(f'[ERROR]: {ex}')
+    await dp.skip_updates()
+    print('Бот запущен!')
+    await dp.start_polling()
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    from traceback import print_exception
+
+    while True:
+        try:
+            asyncio.run(main())
+        except Exception as e:
+            print_exception(e)

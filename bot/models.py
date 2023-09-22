@@ -15,6 +15,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     is_admin = Column(Boolean, default=False, nullable=False)
     full_name = Column(String(256), nullable=True, default=None)
+    url = Column(String(64), nullable=False)
     phone = Column(Integer, nullable=True, default=None)
     active_requests = Column(Integer, default=0)
 
@@ -65,16 +66,14 @@ class Task(Base):
     __tablename__ = 'tasks'
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(ForeignKey('users.id'))
-    requesting_username = Column(String)
     type_id = Column(Integer, ForeignKey('tasks_types.id'))
-    full_name = Column(String(256))
-    phone = Column(Integer())
-    student_full_name = Column(String(256))
-    student_class = Column(String(4), nullable=True)
+    student_id = Column(ForeignKey('students.id'))
+
     student_beneficiary = Column(Boolean(), nullable=True)
     duration_in_month = Column(Integer, nullable=True)
     service_id = Column(Integer, ForeignKey('services.id'), nullable=True)
 
+    student = relationship('Student')
     type = relationship('TaskType')
     user = relationship('User')
     service = relationship('Service')
@@ -84,4 +83,14 @@ class Task(Base):
 
 
 if __name__ == '__main__':
+    engine = create_engine('sqlite:///../bot.db')
     Base.metadata.create_all(engine)
+
+    s = sessionmaker(bind=engine)()
+    s.add_all([
+        TaskType(name='Справка об обучении в школе'),
+        TaskType(name='Справка о питании'),
+        TaskType(name='Спарвка о дополнительных услугах')
+    ])
+    s.commit()
+    s.close()

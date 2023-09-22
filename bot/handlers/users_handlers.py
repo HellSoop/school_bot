@@ -6,7 +6,7 @@ from bot.keyboards import get_task_type_ikb, task_type_cbd, duration_cbd, servic
     choose_student_cbd, get_help_kb, cancel_kb
 from bot.states_groups import GetCertificateSG
 from .user_utils import go_next_optional_field, registered, get_help_message, add_history, clear_history
-from bot.models import session, User, Student
+from bot.models import session, User
 
 s = session()
 
@@ -21,7 +21,7 @@ async def cmd_help(msg: types.Message):
 
 
 async def cmd_cancel(msg: types.Message, state: FSMContext):
-    await msg.delete()
+    await cmd_help(msg)
     await clear_history(state)
     await state.finish()
 
@@ -48,7 +48,7 @@ async def start_fill(cb: types.CallbackQuery, callback_data: dict, state: FSMCon
     match callback_data['id']:
         case '1':
             async with state.proxy() as data:
-                data['optional_fields'] = ['student_class']
+                data['optional_fields'] = []
         case '2':
             async with state.proxy() as data:
                 data['optional_fields'] = ['student_beneficiary', 'duration']
@@ -63,7 +63,6 @@ async def start_fill(cb: types.CallbackQuery, callback_data: dict, state: FSMCon
 
     async with state.proxy() as data:
         data['user'] = cb.from_user
-        data['username'] = cb.from_user.username
         data['type_id'] = int(callback_data['id'])
         data['opt_fields_msgs'] = [GetCertificateSG.optional_fields_messages[f] for f in data['optional_fields']]
 
@@ -73,16 +72,10 @@ async def start_fill(cb: types.CallbackQuery, callback_data: dict, state: FSMCon
 
 
 # message and callback handlers with states
-
-# registered users only!
 async def choose_student(cb: types.CallbackQuery, callback_data: dict, state: FSMContext):
     await cb.message.delete()
-    student = s.query(Student).where(Student.id == callback_data['id']).one()
     async with state.proxy() as data:
-        data['students_full_name'] = student.full_name
-        if 'student_class' in data['optional_fields']:
-            data['student_class'] = student.clas
-            data['optional_fields'].pop(data['optional_fields'].index('student_class'))
+        data['student_id'] = callback_data['id']
 
     await go_next_optional_field(cb.message, state)
 
@@ -125,5 +118,3 @@ async def register_users_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(get_beneficiary, state=GetCertificateSG.student_beneficiary)
     dp.register_callback_query_handler(get_duration, duration_cbd.filter(), state=GetCertificateSG.duration)
     dp.register_callback_query_handler(get_service, service_cbd.filter(), state=GetCertificateSG.service)
-
-    # message handlers with states

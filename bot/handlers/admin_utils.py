@@ -33,15 +33,12 @@ def create_task_reply_message(task: Task) -> str:
     :return: str in Markdown format
     """
     reply_text = f'***{task.type.name}***\n' \
-                 f'_ФИО родителя(законного представителя)_: {task.full_name}\n'
+                 f'_ФИО родителя(законного представителя)_: {task.user.full_name}\n ' \
+                 f'[Аккаунт пользователя]({task.user.url})\n' \
+                 f'_Телефон_: `{task.user.phone}`\n_ФИО ученика_: {task.student.full_name}'
 
-    if task.requesting_username is not None:
-        reply_text += f'_Оставил пользователь_: @{task.requesting_username}\n'
-
-    reply_text += f'_Телефон_: `{task.phone}`\n_ФИО ученика_: {task.student_full_name}'
-
-    if task.student_class:
-        reply_text += f'\n_Класс ученика_: {task.student_class}'
+    if task.type_id == 1:
+        reply_text += f'\n_Класс ученика_: {task.student.clas}'
     if task.student_beneficiary:
         reply_text += f'\n_Льготник_'
     if task.duration_in_month is not None:

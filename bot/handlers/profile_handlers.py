@@ -51,7 +51,7 @@ async def logout(msg: types.Message):
 # callback query handlers
 async def finish_registration(cb: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
-        register_user(user_id=cb.from_user.id, full_name=data['full_name'], phone=data['phone'])
+        register_user(user_id=cb.from_user.id, full_name=data['full_name'], phone=data['phone'], url=data['url'])
         try:
             s.add_all([Student(full_name=c['full_name'], parent_id=cb.from_user.id,
                                clas=c['class']) for c in data['children']])
@@ -75,7 +75,7 @@ async def active_requests_button(cb: types.CallbackQuery):
     if user.active_requests:
         reply_text += '***Активные заявки***'
         for task in user.requests:
-            reply_text += f'\n\n"{task.type.name}" для {task.student_full_name}'
+            reply_text += f'\n\n"{task.type.name}" для {task.student.full_name}'
     else:
         reply_text += 'Нет активных заявок'
 
@@ -159,6 +159,7 @@ async def get_register_fullname(msg: types.Message, state: FSMContext):
     await add_history(msg, state)
     async with state.proxy() as data:
         data['full_name'] = msg.text
+        data['url'] = msg.from_user.url
         data['children'] = []
 
     await add_history(await msg.answer('Введите ваш мобильный телефон'), state)

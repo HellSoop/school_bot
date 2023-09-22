@@ -14,7 +14,7 @@ def registered(user_id: int) -> bool:
     return res
 
 
-def register_user(user_id, full_name, phone):
+def register_user(user_id, full_name, phone, url):
     s = session()
     if registered(user_id):
         user = s.query(User).where(User.id == user_id).first()
@@ -22,7 +22,7 @@ def register_user(user_id, full_name, phone):
         user.phone = phone
         s.add(user)
     else:
-        s.add(User(id=user_id, full_name=full_name, phone=phone))
+        s.add(User(id=user_id, full_name=full_name, phone=phone, url=url))
 
     s.commit()
     s.close()
@@ -31,17 +31,23 @@ def register_user(user_id, full_name, phone):
 def get_help_message(user):
     from .admin_handlers import login_first_admin
     reply_text = '<b><i>Список команд:</i></b>\n'\
-                 '/cancel - принудительно завершить заполнение формы\n'\
-                 '/register - зарегистрироваться в системе'
+                 '/cancel - принудительно завершить заполнение формы'
+
     if not login_first_admin.used:
         reply_text += '\n/admin_login - войти как администратор'
+
     if registered(user.id):
         reply_text += '\n/get - отправить заявку на справку'
         reply_text += '\n/profile - открыть профиль'
         reply_text += '\n/logout - выйти из системы <i>(аккаунт будет автоматически удалён)</i>'
+
         if have_admin_rights(user):
             reply_text += '\n/tasks - посмотерть список активных заявок\n' \
                           '/add_admin <b>@&lt;username пользователя&gt;</b> - дать пользователю права администратора'
+
+    else:
+        reply_text += '\n/register - зарегистрироваться в системе'
+
     return reply_text
 
 
@@ -104,28 +110,21 @@ def save_task(data: dict) -> dict:
 
     user = s.query(User).where(User.id == data['user'].id).one()
     task = Task(
-        requesting_username=data['username'],
         type_id=data['type_id'],
         user_id=user.id,
-        full_name=user.full_name,
-        phone=user.phone,
-        student_full_name=data['students_full_name'],
-        student_class=data.get('student_class'),
+        student_id=data['student_id'],
+
         student_beneficiary=data.get('student_beneficiary'),
         duration_in_month=data.get('duration'),
         service_id=data.get('service_id')
     )
 
     same_task = s.query(Task).where(
-        Task.requesting_username == task.requesting_username
-    ).where(
         Task.type_id == task.type_id
     ).where(
-        Task.full_name == task.full_name
+        Task.user_id == task.user_id
     ).where(
-        Task.student_full_name == task.student_full_name
-    ).where(
-        Task.student_class == task.student_class
+        Task.student_id == task.student_id
     ).where(
         Task.student_beneficiary == task.student_beneficiary
     ).where(
@@ -139,7 +138,7 @@ def save_task(data: dict) -> dict:
         s.commit()
         s.refresh(task)
         task.user.active_requests += 1
-        res = {'full_name': task.full_name, 'type': task.type.name}
+        res = {'full_name': task.user.full_name, 'type': task.type.name}
         s.add(task)
         s.commit()
     else:
