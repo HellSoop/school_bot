@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, Boolean, String, ForeignKey
+from sqlalchemy import Column, Integer, Boolean, String, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import declarative_base
 
@@ -18,6 +18,7 @@ class User(Base):
     url = Column(String(64), nullable=False)
     phone = Column(Integer, nullable=True, default=None)
     active_requests = Column(Integer, default=0)
+    banned = Column(Date, nullable=True)
 
     children = relationship('Student', back_populates='parent', cascade='save-update, merge, delete')
     requests = relationship('Task', back_populates='user', cascade='save-update, merge, delete')
@@ -94,3 +95,4 @@ if __name__ == '__main__':
     ])
     s.commit()
     s.close()
+    print('Database has been created')

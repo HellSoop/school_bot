@@ -46,3 +46,8 @@ def create_task_reply_message(task: Task) -> str:
     if task.service_id is not None:
         reply_text += f'\n_Название услуги_: {task.service.name}'
     return reply_text
+
+
+ses = session()
+banned_users = {i: d for i, d in ses.query(User.id, User.banned).all()}
+ses.close()

@@ -1,7 +1,10 @@
+import datetime
 from aiogram import Dispatcher, types
 from aiogram.dispatcher.middlewares import BaseMiddleware
 from aiogram.utils.exceptions import Throttled
 from aiogram.dispatcher.handler import CancelHandler
+from bot.handlers.admin_utils import banned_users
+from bot.models import session, User
 
 
 class ThrottlingMiddleWare(BaseMiddleware):
@@ -16,3 +19,20 @@ class ThrottlingMiddleWare(BaseMiddleware):
             await dp.throttle(key='antiflood_message', rate=self.rate_limit)
         except Throttled as _t:
             raise CancelHandler()
+
+
+class BanMiddleWare(BaseMiddleware):
+    async def on_process_message(self, msg: types.Message, data: dict):
+        if msg.from_user.id in banned_users:
+            if banned_users[msg.from_user.id] < datetime.date.today():
+                # unban user
+                del banned_users[msg.from_user.id]
+
+                s = session()
+                user = s.query(User).where(User.id == msg.from_user.id).one()
+                user.banned = None
+                s.add(user)
+                s.close()
+
+            else:
+                raise CancelHandler()
