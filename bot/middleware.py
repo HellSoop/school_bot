@@ -27,3 +27,10 @@ class BanMiddleWare(BaseMiddleware):
                 unban_user(msg.from_user.id)
             else:
                 raise CancelHandler()
+
+    async def on_process_callback_query(self, cb: types.CallbackQuery, data: dict):
+        if cb.from_user.id in banned_users:
+            if banned_users[cb.from_user.id] < datetime.date.today():
+                unban_user(cb.from_user.id)
+            else:
+                raise CancelHandler()

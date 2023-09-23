@@ -106,12 +106,12 @@ async def cmd_ban(msg: types.Message, state: FSMContext):
         return
 
     await BanSG.user_id.set()
-    await add_history(await msg.answer('Введите ID пользователя для блокировки'), state)
+    await add_history(await msg.answer('Введите ID пользователя для блокировки', reply_markup=cancel_kb), state)
 
 
 async def get_ban_user_id(msg: types.Message, state: FSMContext):
     await add_history(msg, state)
-    if int(msg.text) == msg.from_user.id:
+    if msg.text == str(msg.from_user.id):
         await add_history(await msg.answer('Вы не можете заблокировать самого себя!'), state)
         return
 
@@ -135,9 +135,15 @@ async def get_ban_duration(msg: types.Message, state: FSMContext):
 
     async with state.proxy() as data:
         ban_user(data['user_id'], int(msg.text))
+        try:
+            await msg.bot.send_message(data['user_id'], 'Ваш аккаунт был заблокирован')
+        except:
+            pass
 
     await clear_history(state)
-    await msg.answer('Пользователь заблокирован')
+    await msg.answer('Пользователь заблокирован', reply_markup=get_help_kb(msg.from_user))
+
+    await state.finish()
 
 
 # /banned_users command
@@ -145,6 +151,7 @@ async def cmd_banned_users(msg: types.Message, state: FSMContext):
     await msg.delete()
     if not have_admin_rights(msg.from_user):
         await msg.answer('Недостаточно прав для выполнения команды')
+        return
 
     users = s.query(User).where(User.banned != 0).all()
     if not users:
@@ -172,13 +179,20 @@ async def unban_button(cb: types.CallbackQuery, callback_data: dict,  state: FSM
 
 async def unban_confirm_cancel(cb: types.CallbackQuery, state: FSMContext):
     await cb.message.delete()
+    await cb.message.answer('Закрыто', reply_markup=get_help_kb(cb.from_user))
     await state.finish()
 
 
 async def unban_confirm(cb: types.CallbackQuery, callback_data: dict, state: FSMContext):
     await cb.message.delete()
     unban_user(int(callback_data['id']))
-    await cb.message.answer('Пользователь разблокирован')
+    await cb.message.answer('Пользователь разблокирован', reply_markup=get_help_kb(cb.from_user))
+
+    try:
+        await cb.bot.send_message(int(callback_data['id']), 'Ваш аккаунт был разблокирован')
+    except:
+        pass
+
     await state.finish()
 
 

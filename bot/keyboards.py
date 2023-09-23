@@ -21,6 +21,7 @@ def get_help_kb(user):
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     if have_admin_rights(user):
         kb.add(KeyboardButton('/tasks'), KeyboardButton('/add_admin'))
+        kb.add(KeyboardButton('/ban'), KeyboardButton('/banned_users'))
     if registered(user.id):
         kb.add(KeyboardButton('/get'), KeyboardButton('/profile'), KeyboardButton('/logout'))
     else:

@@ -21,8 +21,9 @@ async def cmd_help(msg: types.Message):
 
 
 async def cmd_cancel(msg: types.Message, state: FSMContext):
-    await cmd_help(msg)
+    await msg.delete()
     await clear_history(state)
+    await msg.answer('Закрыто', reply_markup=get_help_kb(msg.from_user))
     await state.finish()
 
 

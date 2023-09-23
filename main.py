@@ -11,8 +11,8 @@ from bot.middleware import ThrottlingMiddleWare, BanMiddleWare
 
 
 async def register_handlers(dp: Dispatcher) -> None:
-    await register_admin_handlers(dp)
     await register_users_handlers(dp)
+    await register_admin_handlers(dp)
     await register_profile_handlers(dp)
 
     dp.middleware.setup(ThrottlingMiddleWare(1))
