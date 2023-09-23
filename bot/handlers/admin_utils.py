@@ -33,7 +33,7 @@ def create_task_reply_message(task: Task) -> str:
     :return: str in Markdown format
     """
     reply_text = f'***{task.type.name}***\n' \
-                 f'_ФИО родителя(законного представителя)_: {task.user.full_name}\n ' \
+                 f'_ФИО родителя(законного представителя)_: `{task.user.full_name}`\n ' \
                  f'[Аккаунт пользователя]({task.user.url})\n' \
                  f'_Телефон_: `{task.user.phone}`\n_ФИО ученика_: {task.student.full_name}'
 
