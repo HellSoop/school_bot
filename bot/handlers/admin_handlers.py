@@ -3,9 +3,9 @@ from os import getenv
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from sqlalchemy.exc import NoResultFound
-from bot.states_groups import FirstLoginSG, ViewTasksSG
+from bot.states_groups import FirstLoginSG, ViewTasksSG, BanSG
 from bot.keyboards import get_close_task_ikb, close_task_cbd, get_help_kb, cancel_kb
-from .admin_utils import have_admin_rights, create_task_reply_message
+from .admin_utils import have_admin_rights, create_task_reply_message, ban_user
 from .user_utils import registered, add_history, clear_history
 from bot.models import session, User, Task
 
@@ -97,8 +97,45 @@ async def close_task(cb: types.CallbackQuery, callback_data: dict):
 
 # ban system
 
-async def cmd_ban(msg: types.Message):
-    ...
+async def cmd_ban(msg: types.Message, state: FSMContext):
+    await msg.delete()
+    if not have_admin_rights(msg.from_user):
+        await msg.answer('Недостаточно прав для выполнения команды')
+        return
+
+    await BanSG.user_id.set()
+    await add_history(await msg.answer('Введите ID пользователя для блокировки'), state)
+
+
+async def get_ban_user_id(msg: types.Message, state: FSMContext):
+    await add_history(msg, state)
+    if int(msg.text) == msg.from_user.id:
+        await add_history(await msg.answer('Вы не можете заблокировать самого себя!'), state)
+        return
+
+    try:
+        s.query(User).where(User.id == msg.text).one()
+    except NoResultFound:
+        await add_history(await msg.answer('Введёный ID некорректен, попробуйте ещё раз'), state)
+        return
+
+    async with state.proxy() as data:
+        data['user_id'] = int(msg.text)
+    await BanSG.next()
+    await add_history(await msg.answer('Введите количество дней, на которые пользователь будет заблокировн'), state)
+
+
+async def get_ban_duration(msg: types.Message, state: FSMContext):
+    await add_history(msg, state)
+    if not msg.text.isdigit():
+        await msg.answer('Введённые данные некорректны, попробуйте ещё раз')
+        return
+
+    async with state.proxy() as data:
+        ban_user(data['user_id'], int(msg.text))
+
+    await clear_history(state)
+    await msg.answer('Пользователь заблокирован')
 
 
 async def register_admin_handlers(dp: Dispatcher) -> None:
@@ -114,3 +151,5 @@ async def register_admin_handlers(dp: Dispatcher) -> None:
 
     # ban system
     dp.register_message_handler(cmd_ban, commands=['ban'])
+    dp.register_message_handler(get_ban_user_id, state=BanSG.user_id)
+    dp.register_message_handler(get_ban_duration, state=BanSG.duration)

@@ -27,6 +27,11 @@ class ViewTasksSG(StatesGroup):
     view = State()
 
 
+class BanSG(StatesGroup):
+    user_id = State()
+    duration = State()
+
+
 class RegisterSG(StatesGroup):
     full_name = State()
     phone = State()
