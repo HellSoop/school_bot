@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 from bot.states_groups import FirstLoginSG, ViewTasksSG
 from dotenv import load_dotenv
 from os import getenv
-from bot.keyboards import get_close_task_ikb, close_task_cbd, get_help_kb
+from bot.keyboards import get_close_task_ikb, close_task_cbd, get_help_kb, cancel_kb
 from .admin_utils import have_admin_rights, create_task_reply_message
 from .user_utils import registered, add_history, clear_history
 from bot.models import session, User, Task
@@ -35,7 +35,7 @@ async def login_first_admin(msg: types.Message, state: FSMContext):
             user.is_admin = True
             s.add(user)
         else:
-            s.add(User(id=msg.from_user.id, is_admin=True))
+            s.add(User(id=msg.from_user.id, is_admin=True, url=msg.from_user.url))
         s.commit()
         login_first_admin.used = True
 
@@ -77,7 +77,8 @@ async def get_tasks(msg: types.Message, state: FSMContext):
         await add_history(await msg.answer(create_task_reply_message(t),
                                            parse_mode='Markdown', reply_markup=get_close_task_ikb(t.id)), state)
 
-    await add_history(await msg.answer('/cancel, чтобы выйти из режима просмтотра заявлнений'), state)
+    await add_history(await msg.answer('/cancel, чтобы выйти из режима просмтотра заявлнений',
+                                       reply_markup=cancel_kb), state)
 
 
 # callback query handlers
