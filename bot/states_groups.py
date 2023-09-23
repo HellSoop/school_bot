@@ -32,6 +32,10 @@ class BanSG(StatesGroup):
     duration = State()
 
 
+class ViewBannedUsers(StatesGroup):
+    view = State()
+
+
 class RegisterSG(StatesGroup):
     full_name = State()
     phone = State()

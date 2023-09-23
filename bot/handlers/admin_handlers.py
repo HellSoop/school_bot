@@ -3,9 +3,10 @@ from os import getenv
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from sqlalchemy.exc import NoResultFound
-from bot.states_groups import FirstLoginSG, ViewTasksSG, BanSG
-from bot.keyboards import get_close_task_ikb, close_task_cbd, get_help_kb, cancel_kb
-from .admin_utils import have_admin_rights, create_task_reply_message, ban_user
+from bot.states_groups import FirstLoginSG, ViewTasksSG, BanSG, ViewBannedUsers
+from bot.keyboards import get_close_task_ikb, close_task_cbd, get_help_kb, cancel_kb, get_unban_ikb, unban_cbd, \
+    get_unban_confirm_ikb, unban_confirm_cbd
+from .admin_utils import have_admin_rights, create_task_reply_message, ban_user, unban_user, create_banned_user_message
 from .user_utils import registered, add_history, clear_history
 from bot.models import session, User, Task
 
@@ -97,6 +98,7 @@ async def close_task(cb: types.CallbackQuery, callback_data: dict):
 
 # ban system
 
+# /ban command
 async def cmd_ban(msg: types.Message, state: FSMContext):
     await msg.delete()
     if not have_admin_rights(msg.from_user):
@@ -138,6 +140,48 @@ async def get_ban_duration(msg: types.Message, state: FSMContext):
     await msg.answer('Пользователь заблокирован')
 
 
+# /banned_users command
+async def cmd_banned_users(msg: types.Message, state: FSMContext):
+    await msg.delete()
+    if not have_admin_rights(msg.from_user):
+        await msg.answer('Недостаточно прав для выполнения команды')
+
+    users = s.query(User).where(User.banned != 0).all()
+    if not users:
+        await msg.answer('Нет заблокированных пользователей')
+        return
+
+    await ViewBannedUsers.view.set()
+    for user in users:
+        await add_history(await msg.answer(create_banned_user_message(user),
+                                           parse_mode='Markdown', reply_markup=get_unban_ikb(user)), state)
+    await add_history(await msg.answer('Используйте /cancel для выхода из режима просмотра '
+                                       'заблокированных пользователей', reply_markup=cancel_kb), state)
+
+
+async def unban_button(cb: types.CallbackQuery, callback_data: dict,  state: FSMContext):
+    await clear_history(state)
+
+    index = callback_data['user'].find('_')
+    user_id = callback_data['user'][:index]
+    full_name = callback_data['user'][index + 1:]
+
+    await cb.message.answer(f'Вы уверены, что хотите раблокировать пользователя {full_name}?',
+                            reply_markup=get_unban_confirm_ikb(user_id))
+
+
+async def unban_confirm_cancel(cb: types.CallbackQuery, state: FSMContext):
+    await cb.message.delete()
+    await state.finish()
+
+
+async def unban_confirm(cb: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    await cb.message.delete()
+    unban_user(int(callback_data['id']))
+    await cb.message.answer('Пользователь разблокирован')
+    await state.finish()
+
+
 async def register_admin_handlers(dp: Dispatcher) -> None:
     # message handlers
     dp.register_message_handler(ask_first_time_password, commands=['admin_login'])
@@ -150,6 +194,12 @@ async def register_admin_handlers(dp: Dispatcher) -> None:
     dp.register_callback_query_handler(close_task, close_task_cbd.filter(), state=ViewTasksSG.view)
 
     # ban system
+    # /ban
     dp.register_message_handler(cmd_ban, commands=['ban'])
     dp.register_message_handler(get_ban_user_id, state=BanSG.user_id)
     dp.register_message_handler(get_ban_duration, state=BanSG.duration)
+    # /banned_users
+    dp.register_message_handler(cmd_banned_users, commands=['banned_users'])
+    dp.register_callback_query_handler(unban_button, unban_cbd.filter(), state=ViewBannedUsers.view)
+    dp.register_callback_query_handler(unban_confirm_cancel, text='unban_cancel', state=ViewBannedUsers.view)
+    dp.register_callback_query_handler(unban_confirm, unban_confirm_cbd.filter(), state=ViewBannedUsers.view)

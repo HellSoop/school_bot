@@ -84,3 +84,9 @@ def unban_user(user_id: int):
     s.add(user)
     s.commit()
     s.close()
+
+
+def create_banned_user_message(user: User):
+    return f'Имя пользователя: {user.full_name}\n' \
+           f'[Аккаунт]({user.url})\n' \
+           f'ID пользователя: {user.id}'

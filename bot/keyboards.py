@@ -5,6 +5,8 @@ from bot.models import session, TaskType, Service, User
 remove_student_cbd = CallbackData('remove_student', 'id')
 logout_cbd = CallbackData('logout_confirm', 'confirm')
 task_type_cbd = CallbackData('task_type_choose', 'id')
+unban_cbd = CallbackData('unban_user', 'user')
+unban_confirm_cbd = CallbackData('unban_confirm', 'id')
 choose_student_cbd = CallbackData('student_choose', 'id')
 duration_cbd = CallbackData('duration_choose', 'duration')
 service_cbd = CallbackData('service_choose', 'id')
@@ -54,6 +56,19 @@ def get_task_type_ikb():
 
     s.close()
     return ikb
+
+
+def get_unban_ikb(user: User):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton('Разблокировать', callback_data=unban_cbd.new(f'{user.id}_{user.full_name}'))
+         ]])
+
+
+def get_unban_confirm_ikb(user_id):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton('Да', callback_data=unban_confirm_cbd.new(user_id)),
+         InlineKeyboardButton('Нет', callback_data='unban_cancel')]
+    ])
 
 
 def get_choose_student_ikb(user: User):
@@ -114,5 +129,3 @@ duration_ikb = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton('6 месяцев', callback_data=duration_cbd.new(6))],
     [InlineKeyboardButton('9 месяцев', callback_data=duration_cbd.new(9))]
 ])
-
-
