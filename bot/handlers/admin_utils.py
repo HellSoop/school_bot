@@ -1,3 +1,4 @@
+import datetime
 from bot.models import session, User, Task
 
 
@@ -33,7 +34,8 @@ def create_task_reply_message(task: Task) -> str:
     :return: str in Markdown format
     """
     reply_text = f'***{task.type.name}***\n' \
-                 f'_ФИО родителя(законного представителя)_: `{task.user.full_name}`\n ' \
+                 f'_ФИО родителя(законного представителя)_: `{task.user.full_name}`\n' \
+                 f'ID пользователя: `{task.user_id}`\n' \
                  f'[Аккаунт пользователя]({task.user.url})\n' \
                  f'_Телефон_: `{task.user.phone}`\n_ФИО ученика_: {task.student.full_name}'
 
@@ -49,5 +51,36 @@ def create_task_reply_message(task: Task) -> str:
 
 
 ses = session()
-banned_users = {i: d for i, d in ses.query(User.id, User.banned).all()}
+banned_users = {i: d for i, d in ses.query(User.id, User.banned).all() if d is not None}
 ses.close()
+
+
+def ban_user(user_id: int, duration: int) -> None:
+    """
+    Ban user by ID
+    :param user_id: user ID
+    :param duration: duration of ban by days
+    :return: None
+    """
+
+    s = session()
+    user = s.query(User).where(User.id == user_id).one()
+
+    user.banned = datetime.date.today() + datetime.timedelta(days=duration)
+    banned_users[user_id] = user.banned
+
+    s.add(user)
+    s.commit()
+    s.close()
+
+
+def unban_user(user_id: int):
+    s = session()
+    user = s.query(User).where(User.id == user_id).one()
+
+    user.banned = None
+    del banned_users[user_id]
+
+    s.add(user)
+    s.commit()
+    s.close()

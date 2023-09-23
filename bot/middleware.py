@@ -3,8 +3,7 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher.middlewares import BaseMiddleware
 from aiogram.utils.exceptions import Throttled
 from aiogram.dispatcher.handler import CancelHandler
-from bot.handlers.admin_utils import banned_users
-from bot.models import session, User
+from bot.handlers.admin_utils import banned_users, unban_user
 
 
 class ThrottlingMiddleWare(BaseMiddleware):
@@ -25,14 +24,6 @@ class BanMiddleWare(BaseMiddleware):
     async def on_process_message(self, msg: types.Message, data: dict):
         if msg.from_user.id in banned_users:
             if banned_users[msg.from_user.id] < datetime.date.today():
-                # unban user
-                del banned_users[msg.from_user.id]
-
-                s = session()
-                user = s.query(User).where(User.id == msg.from_user.id).one()
-                user.banned = None
-                s.add(user)
-                s.close()
-
+                unban_user(msg.from_user.id)
             else:
                 raise CancelHandler()

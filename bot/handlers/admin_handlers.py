@@ -1,8 +1,9 @@
-from aiogram import Dispatcher, types
-from aiogram.dispatcher import FSMContext
-from bot.states_groups import FirstLoginSG, ViewTasksSG
 from dotenv import load_dotenv
 from os import getenv
+from aiogram import Dispatcher, types
+from aiogram.dispatcher import FSMContext
+from sqlalchemy.exc import NoResultFound
+from bot.states_groups import FirstLoginSG, ViewTasksSG
 from bot.keyboards import get_close_task_ikb, close_task_cbd, get_help_kb, cancel_kb
 from .admin_utils import have_admin_rights, create_task_reply_message
 from .user_utils import registered, add_history, clear_history
@@ -94,6 +95,12 @@ async def close_task(cb: types.CallbackQuery, callback_data: dict):
         s.commit()
 
 
+# ban system
+
+async def cmd_ban(msg: types.Message):
+    ...
+
+
 async def register_admin_handlers(dp: Dispatcher) -> None:
     # message handlers
     dp.register_message_handler(ask_first_time_password, commands=['admin_login'])
@@ -104,3 +111,6 @@ async def register_admin_handlers(dp: Dispatcher) -> None:
 
     # callback query handlers
     dp.register_callback_query_handler(close_task, close_task_cbd.filter(), state=ViewTasksSG.view)
+
+    # ban system
+    dp.register_message_handler(cmd_ban, commands=['ban'])
