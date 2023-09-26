@@ -169,12 +169,9 @@ async def cmd_banned_users(msg: types.Message, state: FSMContext):
 async def unban_button(cb: types.CallbackQuery, callback_data: dict,  state: FSMContext):
     await clear_history(state)
 
-    index = callback_data['user'].find('_')
-    user_id = callback_data['user'][:index]
-    full_name = callback_data['user'][index + 1:]
-
-    await cb.message.answer(f'Вы уверены, что хотите раблокировать пользователя {full_name}?',
-                            reply_markup=get_unban_confirm_ikb(user_id))
+    user = s.query(User).where(User.id == callback_data['id']).one()
+    await cb.message.answer(f'Вы уверены, что хотите раблокировать пользователя {user.full_name}?',
+                            reply_markup=get_unban_confirm_ikb(user.id))
 
 
 async def unban_confirm_cancel(cb: types.CallbackQuery, state: FSMContext):

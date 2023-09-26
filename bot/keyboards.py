@@ -5,7 +5,7 @@ from bot.models import session, TaskType, Service, User
 remove_student_cbd = CallbackData('remove_student', 'id')
 logout_cbd = CallbackData('logout_confirm', 'confirm')
 task_type_cbd = CallbackData('task_type_choose', 'id')
-unban_cbd = CallbackData('unban_user', 'user')
+unban_cbd = CallbackData('unban_user', 'id')
 unban_confirm_cbd = CallbackData('unban_confirm', 'id')
 choose_student_cbd = CallbackData('student_choose', 'id')
 duration_cbd = CallbackData('duration_choose', 'duration')
@@ -61,7 +61,7 @@ def get_task_type_ikb():
 
 def get_unban_ikb(user: User):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton('Разблокировать', callback_data=unban_cbd.new(f'{user.id}_{user.full_name}'))
+        [InlineKeyboardButton('Разблокировать', callback_data=unban_cbd.new(user.id))
          ]])
 
 
