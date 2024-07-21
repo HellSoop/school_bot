@@ -197,7 +197,7 @@ async def register_admin_handlers(dp: Dispatcher) -> None:
     # message handlers
     dp.register_message_handler(ask_first_time_password, commands=['admin_login'])
     dp.register_message_handler(login_first_admin, state=FirstLoginSG.password_input)
-    dp.register_message_handler(add_admin, regexp='/add_admin @\w{4,32}')
+    dp.register_message_handler(add_admin, regexp=r'/add_admin @\w{4,32}')
 
     dp.register_message_handler(get_tasks, commands=['tasks'])
 
