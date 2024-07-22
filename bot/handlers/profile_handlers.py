@@ -186,7 +186,7 @@ async def get_register_student_name(msg: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['children'].append({'full_name': msg.text})
 
-    await add_history(await msg.answer('Введите класс учениека'), state)
+    await add_history(await msg.answer('Введите класс ученика'), state)
     await RegisterSG.next()
 
 

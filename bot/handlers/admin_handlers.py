@@ -60,7 +60,7 @@ async def add_admin(msg: types.Message):
     username = msg.text[msg.text.find('@') + 1:]
     have_admin_rights.unregistered_admins.append(username)
     await msg.answer(f'Пользователь @{username} добавлен к администраторам. '
-                     f'Изменеия будут сохранены после первой выпоненой им команды.')
+                     f'Изменения будут сохранены после первой выполненной им команды.')
 
 
 async def get_tasks(msg: types.Message, state: FSMContext):
@@ -79,7 +79,7 @@ async def get_tasks(msg: types.Message, state: FSMContext):
         await add_history(await msg.answer(create_task_reply_message(t),
                                            parse_mode='Markdown', reply_markup=get_close_task_ikb(t.id)), state)
 
-    await add_history(await msg.answer('/cancel, чтобы выйти из режима просмтотра заявлнений',
+    await add_history(await msg.answer('/cancel, чтобы выйти из режима просмотра заявлений',
                                        reply_markup=cancel_kb), state)
 
 
@@ -118,13 +118,13 @@ async def get_ban_user_id(msg: types.Message, state: FSMContext):
     try:
         s.query(User).where(User.id == msg.text).one()
     except NoResultFound:
-        await add_history(await msg.answer('Введёный ID некорректен, попробуйте ещё раз'), state)
+        await add_history(await msg.answer('Введённый ID некорректен, попробуйте ещё раз'), state)
         return
 
     async with state.proxy() as data:
         data['user_id'] = int(msg.text)
     await BanSG.next()
-    await add_history(await msg.answer('Введите количество дней, на которые пользователь будет заблокировн'), state)
+    await add_history(await msg.answer('Введите количество дней, на которые пользователь будет заблокирован'), state)
 
 
 async def get_ban_duration(msg: types.Message, state: FSMContext):
@@ -170,7 +170,7 @@ async def unban_button(cb: types.CallbackQuery, callback_data: dict,  state: FSM
     await clear_history(state)
 
     user = s.query(User).where(User.id == callback_data['id']).one()
-    await cb.message.answer(f'Вы уверены, что хотите раблокировать пользователя {user.full_name}?',
+    await cb.message.answer(f'Вы уверены, что хотите разблокировать пользователя {user.full_name}?',
                             reply_markup=get_unban_confirm_ikb(user.id))
 
 
